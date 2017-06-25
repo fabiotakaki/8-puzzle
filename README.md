@@ -1,2 +1,1 @@
-# KickStarter using gulp
-# 8-puzzle
+# 8-puzzle Algorithm JavaScript
