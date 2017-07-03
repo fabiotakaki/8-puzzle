@@ -6,12 +6,25 @@
 </head>
 <body>
 <header>
-  <h1 style="text-align: center;">8-Puzzle</h1>
-  <button id="mix">Misturar</button><input type="text" name="moves" id="moves"><br>
-  <button id="bfs">Brute-force (Width Search)</button>
-  <button id="astar">A* (1 heuristica)</button>
+  <h1>Trabalho de Inteligência Artificial</h1>
+  <h2>Prof. Almir Olivete Artero</h2>
+  <h3>8-Puzzle</h3>
+  <h4>Fábio da Silva Takaki e Arthur de Moraes Pires</h4>
+  <button id="mix">Misturar</button><input type="text" name="moves" id="moves">
+
+  <br>
+  <button id="bfs">Movimentos Aleatórios</button>
+  <button id="astar">1 heuristica: Análise em 1 nível</button>
+  <button id="astar_2_levels">2 heuristica: Análise em 2 níveis</button>
+  <button id="personheuristic">Heurística pessoal</button>
+
+  <br>
   <button id="case1">Caso 1</button>
-  <br> Número de movimentos <div class="moves">0</div>
+  <button id="case2">Caso 2</button>
+  <button id="case3">Caso 3</button>
+  <br><b>Número de movimentos:</b> <div class="moves">0</div>
+  <br><b>Tempo:</b> <span class="time">será exibido aqui o tempo após a execução do algoritmo.</span>
+  <br><b>Obs:</b> durante a execução dos algoritmos, se a solução estiver distante, pode ocorrer do browser travar, mas o algoritmo continua em execução.
 </header>
 <div class="board">
   <ul>
@@ -29,18 +42,8 @@
 <div class="step"></div>
 <script type="text/javascript" src="assets/js/jquery-3.2.1.min.js"></script>
 <script type="text/javascript">
-// var stack = [];
-// stack.push(2);       // stack is now [2]
-// stack.push(5);       // stack is now [2, 5]
-// var i = stack.pop(); // stack is now [2]
-// alert(i);            // displays 5
 
-// var queue = [];
-// queue.push(2);         // queue is now [2]
-// queue.push(5);         // queue is now [2, 5]
-// var i = queue.shift(); // queue is now [5]
-// alert(i);              // displays 2
-// o que em cada posição o vazio pode trocar
+  // o que em cada posição o vazio pode trocar
   var pos = [];
   pos[0] = [3, 1];
   pos[1] = [4, 0, 2];
@@ -51,6 +54,8 @@
   pos[6] = [3, 7];
   pos[7] = [4, 6, 8];
   pos[8] = [5, 7];
+
+  var start;
 
   $(document).ready(function() {
     $(".square").on("click", function(){
@@ -64,7 +69,7 @@
         swap(cur_elem_id, freeElem);
         var result = verify_result();
         if(result){
-          alert('resolvido!');
+          alert('Problema resolvido!');
         }
       }
     });
@@ -137,6 +142,8 @@
       var id_state = '#sq-'+i;
       $(id_state).text(state[i]);
     }
+    var mov = parseInt($('.moves').text()) + 1;
+    $('.moves').text(mov.toString());
   }
 
   function State(state, dad = null, depth = 0){
@@ -202,7 +209,32 @@
       return pos[this.whereisZero()];
     }
 
-    this.cost = function(){
+    // Manhatan distance
+    this.cost = function(son = null){
+      var cost = 0;
+      var size = parseInt(Math.sqrt(this.state.length));
+
+      for (var i = 0; i < this.state.length; i++){
+        if( this.state[i] == this.goal[i] ) continue;
+        else{
+          cost += (Math.abs(this.state[i]/size - this.goal[i]/size) + Math.abs(this.state[i]%size - this.goal[i]%size));
+        }
+      }
+
+      if(son != null){
+        for (var i = 0; i < son.getStateArray().length; i++){
+          if( son.getStateArray()[i] == this.goal[i] ) continue;
+          else{
+            cost += (Math.abs(son.getStateArray()[i]/size - this.goal[i]/size) + Math.abs(son.getStateArray()[i]%size - this.goal[i]%size));
+          }
+        }
+      }
+
+      return cost;
+    }
+
+    // contagem de peças fora do lugar
+    this.personcost = function(){
       var count = 0;
       for(var i=0; i<this.state.length; i++){
         if(this.state[i] != 0 && this.state[i] != this.goal[i]){
@@ -213,6 +245,25 @@
       return count;
     }
 
+  }
+
+  function formatNum(num,tam) { // formata números com zeros à esquerda
+    var str = num.toString();
+    while (str.length < tam)
+      str = '0'+str;
+      
+    return str;
+  }
+
+  function calculateTime() {
+    var time = new Date().getTime() - start; // calcula time transcorrido
+    var tms = formatNum(time%1000,3); // calcula os milissegundos
+    time = Math.floor(time/1000);
+    var tseg = formatNum(time%60,2); // calcula os segundos
+    time = Math.floor(time/60);
+    var tmin = formatNum(time%60,2); // calcula os minutos
+    time = Math.floor(time/60);
+    $('.time').html(formatNum(time,2)+":"+tmin+":"+tseg+"."+tms);
   }
 
   function QueuePriority(){
@@ -252,6 +303,7 @@
   }
 
   function bfs(puzzle){
+    start = new Date().getTime(); // tempo inicial
     
     var initial_state = new State(puzzle);
     var queue = [];
@@ -289,14 +341,19 @@
   }
 
   $('#bfs').click(function(){
+    $('.moves').text('0'); // zera movimentos
     var initial = [];
     for(var i=0; i<9; i++){
       initial[i] = parseInt($('#sq-'+i).text());
     }
     var path = bfs(initial);
+    calculateTime();
+
+    alert('Problema resolvido com '+path.length+' movimentos!');
+
     var step = $('<button/>',
      {
-         text: 'Step',
+         text: 'Próximo',
          click: function () {       
           if(path.length){
             var element = path.pop();
@@ -311,14 +368,8 @@
     
   });
 
-  $('#case1').click(function(){
-    var case1 = [7,1,3,2,6,0,5,4,8];
-    for(var i=0; i<case1.length; i++){
-      $('#sq-'+i).text(case1[i]);
-    }
-  }); 
-
   function astar(puzzle){
+    start = new Date().getTime(); // tempo inicial
     
     var initial_state = new State(puzzle);
     var queue = new QueuePriority();
@@ -368,16 +419,135 @@
   }
 
 
+  function astar_2_levels(puzzle){
+    start = new Date().getTime(); // tempo inicial
+    
+    var initial_state = new State(puzzle);
+    var queue = new QueuePriority();
+    var path = [];
+    var visited = [];
+    var depth = initial_state.getDepth();
+    var state;
+    queue.push(initial_state);
+
+    while(!queue.empty())
+    {
+      state = queue.shift();
+      depth = state.getDepth();
+      visited.push(state);
+      if(state.isGoal()){
+        var aux = state;
+        while(aux.getDad() != null){
+          path.push(aux.getStateArray());
+          aux = aux.getDad();
+        }
+        return path;
+      }else{
+        if (depth < 30){
+          depth++;
+          var children = pos[state.whereisZero()];
+          for(var i=0; i<children.length; i++){
+
+            // nivel 1
+            var original_array = state.getStateArray();
+            var child = new State(original_array, state, depth);
+            child.swap(child.whereisZero(), children[i]);
+
+            var exist = child.existInArray(visited);
+            if(exist != null) continue; // se já existe continua
+
+            // nivel 2
+            var children_level2 = pos[child.whereisZero()];
+            for(var j=0; j<children_level2.length; j++){
+
+              var original_array_2 = child.getStateArray();
+              var grandson = new State(original_array_2, child, (depth + 1));
+              grandson.swap(grandson.whereisZero(), children_level2[j]);
+
+              var exist = grandson.existInArray(visited);
+              if(exist != null) continue; // se já existe continua
+
+              var index_exist = child.existInArray(queue);
+              if(index_exist != null){
+                if (queue[index_exist].cost(grandson) <= child.cost(grandson)) // calculo custo em relação com seus netos
+                  continue;
+                else
+                  queue.splice(index_exist,1);  // remove o nodo antigo da lista
+              }
+              queue.push(child);
+            }  
+          }
+        }
+      }
+    }
+  }
+
+  function personheuristic(puzzle){
+    start = new Date().getTime(); // tempo inicial
+    
+    var initial_state = new State(puzzle);
+    var queue = new QueuePriority();
+    var path = [];
+    var visited = [];
+    var depth = initial_state.getDepth();
+    var state;
+    queue.push(initial_state);
+
+    while(!queue.empty())
+    {
+      state = queue.shift();
+      depth = state.getDepth();
+      visited.push(state);
+      if(state.isGoal()){
+        var aux = state;
+        while(aux.getDad() != null){
+          path.push(aux.getStateArray());
+          aux = aux.getDad();
+        }
+        return path;
+      }else{
+        if (depth < 30){
+          depth++;
+          var children = pos[state.whereisZero()];
+          for(var i=0; i<children.length; i++){
+            var original_array = state.getStateArray();
+            var child = new State(original_array, state, depth);
+            child.swap(child.whereisZero(), children[i]);
+
+            var exist = child.existInArray(visited);
+            if(exist != null) continue; // se já existe continua
+
+            var index_exist = child.existInArray(queue);
+            if(index_exist != null){
+              if (queue[index_exist].personcost() <= child.personcost())
+                continue;
+              else
+                queue.splice(index_exist,1);  // remove o nodo antigo da lista
+            }
+
+            queue.push(child);
+          }
+        }
+      }
+    }
+  }
+
+
+
   $('#astar').click(function(){
+    $('.moves').text('0'); // zera movimentos
     var initial = [];
     for(var i=0; i<9; i++){
       initial[i] = parseInt($('#sq-'+i).text());
     }
     var path = astar(initial);
-    console.log(path);
+    calculateTime();
+    
+    alert('Problema resolvido com '+path.length+' movimentos!');
+
     var step = $('<button/>',
      {
-         text: 'Step',
+         text: 'Próximo',
          click: function () {       
           if(path.length){
             var element = path.pop();
@@ -391,6 +561,83 @@
     $('.step').html(step);
     
   });
+
+  $('#astar_2_levels').click(function(){
+    $('.moves').text('0'); // zera movimentos
+    var initial = [];
+    for(var i=0; i<9; i++){
+      initial[i] = parseInt($('#sq-'+i).text());
+    }
+    var path = astar_2_levels(initial);
+    calculateTime();
+
+    alert('Problema resolvido com '+path.length+' movimentos!');
+
+    var step = $('<button/>',
+     {
+         text: 'Próximo',
+         click: function () {       
+          if(path.length){
+            var element = path.pop();
+            showState(element);
+          }else{
+            $('.step').html('');
+          }
+        }
+     });
+
+    $('.step').html(step);
+    
+  });
+
+  $('#personheuristic').click(function(){
+    $('.moves').text('0'); // zera movimentos
+    var initial = [];
+    for(var i=0; i<9; i++){
+      initial[i] = parseInt($('#sq-'+i).text());
+    }
+    var path = personheuristic(initial);
+    calculateTime();
+
+    alert('Problema resolvido com '+path.length+' movimentos!');
+
+    var step = $('<button/>',
+     {
+         text: 'Próximo',
+         click: function () {       
+          if(path.length){
+            var element = path.pop();
+            showState(element);
+          }else{
+            $('.step').html('');
+          }
+        }
+     });
+
+    $('.step').html(step);
+    
+  });
+
+  $('#case1').click(function(){
+    var case1 = [7,1,3,2,6,0,5,4,8];
+    for(var i=0; i<case1.length; i++){
+      $('#sq-'+i).text(case1[i]);
+    }
+  }); 
+
+  $('#case2').click(function(){
+    var case2 = [3,2,5,7,6,1,4,0,8];
+    for(var i=0; i<case2.length; i++){
+      $('#sq-'+i).text(case2[i]);
+    }
+  }); 
+
+  $('#case3').click(function(){
+    var case3 = [7,2,1,4,8,5,3,0,6];
+    for(var i=0; i<case3.length; i++){
+      $('#sq-'+i).text(case3[i]);
+    }
+  }); 
 
   
 

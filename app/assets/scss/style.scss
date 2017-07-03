@@ -3,13 +3,15 @@ body{
 }
 .board ul{
   list-style: none;
-  background: #ccc;
+  background: #27ae60;
   width:300px;
-  height:300px;
+  border-radius: 5px;
   li{
     display: inline-block;
-    margin: 5px;
-    background: #999;
+    margin: 10px 5px;
+    background: #2ecc71;
+    color:#fff;
+    font-weight: bold;
   }
   padding:0;
 }
@@ -21,4 +23,8 @@ body{
   width:100%;
   display: flex;
   justify-content: center;
+}
+
+button{
+  margin:5px 0;
 }
